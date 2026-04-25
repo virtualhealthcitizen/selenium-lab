@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selenium Playground</title>
+<style>
+  /* ── Theme tokens ───────────────────────────────────────────── */
+  :root {
+    --bg-page:     #f4f3ef;
+    --bg-primary:  #ffffff;
+    --bg-secondary:#f1f0eb;
+    --text-primary:#1a1a18;
+    --text-secondary:#5f5e5a;
+    --border:      rgba(0,0,0,0.13);
+    --border-mid:  rgba(0,0,0,0.22);
+    --radius-md:   8px;
+    --radius-lg:   12px;
+    --font-sans:   -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono:   "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+    --badge-blue-bg:#E6F1FB;   --badge-blue-fg:#0C447C;
+    --badge-teal-bg:#E1F5EE;   --badge-teal-fg:#085041;
+    --badge-amber-bg:#FAEEDA;  --badge-amber-fg:#633806;
+    --badge-coral-bg:#FAECE7;  --badge-coral-fg:#712B13;
+    --badge-purple-bg:#EEEDFE; --badge-purple-fg:#3C3489;
+    --badge-green-bg:#EAF3DE;  --badge-green-fg:#27500A;
+
+    --success-bg:#EAF3DE; --success-fg:#27500A; --success-border:#97C459;
+    --error-bg:#FCEBEB;   --error-fg:#791F1F;   --error-border:#F09595;
+
+    --chip-sel-bg:#E6F1FB; --chip-sel-border:#85B7EB; --chip-sel-fg:#0C447C;
+
+    --btn-primary-bg:#185FA5;  --btn-primary-fg:#E6F1FB; --btn-primary-hover:#0C447C;
+    --btn-danger-bg:#A32D2D;   --btn-danger-fg:#FCEBEB;  --btn-danger-hover:#791F1F;
+    --btn-success-bg:#3B6D11;  --btn-success-fg:#EAF3DE;
+
+    --tab-active-color:#185FA5;
+    --progress-fill:#185FA5;
+    --dot-green:#639922; --dot-red:#E24B4A; --dot-amber:#EF9F27;
+    --toast-bg:#2C2C2A;  --toast-fg:#F1EFE8;
+    --toggle-bg:#d0cec8;
+  }
+
+  [data-theme="dark"] {
+    --bg-page:     #181816;
+    --bg-primary:  #222220;
+    --bg-secondary:#2a2a27;
+    --text-primary:#f0efe8;
+    --text-secondary:#9a9990;
+    --border:      rgba(255,255,255,0.1);
+    --border-mid:  rgba(255,255,255,0.18);
+
+    --badge-blue-bg:#042C53;   --badge-blue-fg:#85B7EB;
+    --badge-teal-bg:#04342C;   --badge-teal-fg:#5DCAA5;
+    --badge-amber-bg:#412402;  --badge-amber-fg:#FAC775;
+    --badge-coral-bg:#4A1B0C;  --badge-coral-fg:#F0997B;
+    --badge-purple-bg:#26215C; --badge-purple-fg:#AFA9EC;
+    --badge-green-bg:#173404;  --badge-green-fg:#97C459;
+
+    --success-bg:#173404; --success-fg:#C0DD97; --success-border:#3B6D11;
+    --error-bg:#501313;   --error-fg:#F7C1C1;   --error-border:#A32D2D;
+
+    --chip-sel-bg:#042C53; --chip-sel-border:#378ADD; --chip-sel-fg:#85B7EB;
+
+    --btn-primary-bg:#0C447C;  --btn-primary-fg:#B5D4F4; --btn-primary-hover:#042C53;
+    --btn-danger-bg:#791F1F;   --btn-danger-fg:#F7C1C1;  --btn-danger-hover:#501313;
+    --btn-success-bg:#27500A;  --btn-success-fg:#C0DD97;
+
+    --tab-active-color:#378ADD;
+    --progress-fill:#378ADD;
+    --dot-green:#97C459; --dot-red:#F09595; --dot-amber:#FAC775;
+    --toast-bg:#F1EFE8;  --toast-fg:#2C2C2A;
+    --toggle-bg:#4a4a45;
+  }
+
+  /* ── Reset & base ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--bg-page);
+    transition: background 0.2s, color 0.2s;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  .app { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 620px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Nav ────────────────────────────────────────────────────── */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .nav-links { display: flex; gap: 16px; font-size: 13px; color: var(--text-secondary); }
+  .nav-links span { cursor: pointer; }
+  .nav-links span:hover { color: var(--text-primary); }
+
+  /* ── Dark mode toggle ───────────────────────────────────────── */
+  .theme-toggle {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--text-secondary); cursor: pointer;
+    user-select: none;
+  }
+  .toggle-track {
+    width: 34px; height: 18px; border-radius: 100px;
+    background: var(--toggle-bg);
+    position: relative; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-thumb {
+    position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  [data-theme="dark"] .toggle-track { background: var(--tab-active-color); }
+  [data-theme="dark"] .toggle-thumb { transform: translateX(16px); background: #fff; }
+
+  /* ── Section cards ──────────────────────────────────────────── */
+  h1 { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+  h2 { font-size: 15px; font-weight: 500; color: var(--text-primary); margin-bottom: 12px; }
+  .subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .section {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Badges ─────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 500;
+    padding: 2px 8px; border-radius: 100px; margin-bottom: 10px;
+  }
+  .badge-blue   { background: var(--badge-blue-bg);   color: var(--badge-blue-fg); }
+  .badge-teal   { background: var(--badge-teal-bg);   color: var(--badge-teal-fg); }
+  .badge-amber  { background: var(--badge-amber-bg);  color: var(--badge-amber-fg); }
+  .badge-coral  { background: var(--badge-coral-bg);  color: var(--badge-coral-fg); }
+  .badge-purple { background: var(--badge-purple-bg); color: var(--badge-purple-fg); }
+  .badge-green  { background: var(--badge-green-bg);  color: var(--badge-green-fg); }
+
+  /* ── Form elements ──────────────────────────────────────────── */
+  label {
+    display: block; font-size: 12px; color: var(--text-secondary);
+    margin-bottom: 4px; margin-top: 10px;
+  }
+  label:first-of-type { margin-top: 0; }
+  input[type=text], input[type=password], input[type=email],
+  input[type=number], select, textarea {
+    width: 100%; font-size: 13px; font-family: var(--font-sans);
+    padding: 6px 10px; border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-mid);
+    background: var(--bg-secondary); color: var(--text-primary);
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--tab-active-color); }
+  input[type=range] { width: 100%; accent-color: var(--tab-active-color); cursor: pointer; }
+  input[type=checkbox] { width: auto; accent-color: var(--tab-active-color); cursor: pointer; }
+  input[type=file] { font-size: 12px; color: var(--text-secondary); background: none; border: none; padding: 0; }
+
+  .checkbox-group { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); }
+
+  /* ── Buttons ────────────────────────────────────────────────── */
+  .btn {
+    display: inline-block; padding: 6px 14px; font-size: 13px;
+    border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
+    background: transparent; color: var(--text-primary);
+    cursor: pointer; font-family: var(--font-sans); transition: background 0.12s;
+  }
+  .btn:hover { background: var(--bg-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-fg); border-color: var(--btn-primary-bg); }
+  .btn-primary:hover { background: var(--btn-primary-hover); }
+  .btn-danger  { background: var(--btn-danger-bg);  color: var(--btn-danger-fg);  border-color: var(--btn-danger-bg); }
+  .btn-danger:hover  { background: var(--btn-danger-hover); }
+  .btn-success { background: var(--btn-success-bg); color: var(--btn-success-fg); border-color: var(--btn-success-bg); }
+
+  .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+
+  /* ── Result boxes ───────────────────────────────────────────── */
+  .result-box {
+    margin-top: 12px; padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md); font-size: 12px; min-height: 34px;
+    font-family: var(--font-mono); color: var(--text-secondary);
+    border: 0.5px solid var(--border); word-break: break-all;
+  }
+  .result-box.success { color: var(--success-fg); background: var(--success-bg); border-color: var(--success-border); }
+  .result-box.error   { color: var(--error-fg);   background: var(--error-bg);   border-color: var(--error-border); }
+
+  /* ── Counter ────────────────────────────────────────────────── */
+  .counter-display { font-size: 40px; font-weight: 500; text-align: center; padding: 12px 0; color: var(--text-primary); }
+
+  /* ── Table ──────────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; font-weight: 500; font-size: 11px;
+    color: var(--text-secondary); padding: 6px 10px;
+    border-bottom: 0.5px solid var(--border);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; color: var(--text-primary); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-secondary); }
+  .sortable-header { cursor: pointer; user-select: none; }
+  .sortable-header:hover { color: var(--text-primary); }
+  .sort-icon { margin-left: 4px; opacity: 0.4; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot-green { background: var(--dot-green); }
+  .dot-red   { background: var(--dot-red); }
+  .dot-amber { background: var(--dot-amber); }
+  .inline-edit {
+    border: none; background: transparent; color: var(--text-primary);
+    font-size: 13px; font-family: var(--font-sans); width: 100%;
+    padding: 2px 4px; border-radius: 4px;
+  }
+  .inline-edit:focus { background: var(--bg-secondary); outline: 0.5px solid var(--border-mid); }
+
+  /* ── Progress ───────────────────────────────────────────────── */
+  .progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 100px; overflow: hidden; margin-top: 8px; border: 0.5px solid var(--border); }
+  .progress-fill { height: 100%; background: var(--progress-fill); border-radius: 100px; transition: width 0.3s; }
+
+  /* ── Tabs ───────────────────────────────────────────────────── */
+  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 16px; }
+  .tab {
+    padding: 8px 16px; font-size: 13px; cursor: pointer;
+    border-bottom: 2px solid transparent; color: var(--text-secondary);
+  }
+  .tab.active { color: var(--text-primary); border-bottom-color: var(--tab-active-color); font-weight: 500; }
+  .tab:hover  { color: var(--text-primary); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Accordion ──────────────────────────────────────────────── */
+  .accordion-item { border-bottom: 0.5px solid var(--border); }
+  .accordion-header {
+    padding: 10px 0; cursor: pointer; font-size: 13px; font-weight: 500;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--text-primary);
+  }
+  .accordion-body {
+    font-size: 13px; color: var(--text-secondary);
+    overflow: hidden; max-height: 0; transition: max-height 0.25s ease;
+  }
+  .accordion-body.open { max-height: 200px; padding-bottom: 10px; }
+
+  /* ── Chips ──────────────────────────────────────────────────── */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; background: var(--bg-secondary);
+    border: 0.5px solid var(--border); border-radius: 100px;
+    font-size: 12px; cursor: pointer; color: var(--text-primary);
+    transition: background 0.12s;
+  }
+  .chip.selected { background: var(--chip-sel-bg); border-color: var(--chip-sel-border); color: var(--chip-sel-fg); }
+
+  /* ── Drag & Drop ────────────────────────────────────────────── */
+  .drag-zone {
+    border: 0.5px dashed var(--border-mid); border-radius: var(--radius-md);
+    padding: 12px; min-height: 52px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start;
+    transition: background 0.15s;
+  }
+  .drag-zone.over { background: var(--bg-secondary); border-style: solid; }
+  .drag-item {
+    padding: 6px 12px; background: var(--bg-secondary);
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    cursor: grab; font-size: 13px; user-select: none; color: var(--text-primary);
+  }
+  .drag-item:active { cursor: grabbing; opacity: 0.7; }
+
+  /* ── Loader ─────────────────────────────────────────────────── */
+  .loader {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--border); border-top-color: var(--tab-active-color);
+    border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Modal ──────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-primary); border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-lg); padding: 24px; width: 340px; max-width: 90%;
+  }
+  .modal h3 { font-size: 15px; font-weight: 500; margin-bottom: 8px; color: var(--text-primary); }
+  .modal p { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+
+  /* ── Toast ──────────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--toast-bg); color: var(--toast-fg);
+    padding: 10px 16px; border-radius: var(--radius-md);
+    font-size: 13px; z-index: 200;
+    opacity: 0; transform: translateY(8px);
+    transition: all 0.25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── Form errors ────────────────────────────────────────────── */
+  .form-error { font-size: 12px; color: var(--error-fg); margin-top: 6px; display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Nav -->
+  <div class="nav">
+    <div>
+      <h1 id="app-title">Selenium Test Playground</h1>
+      <p class="subtitle">A multi-feature app for writing and validating Selenium scripts</p>
+    </div>
+    <div class="nav-right">
+      <div class="nav-links">
+        <span id="nav-home" onclick="scrollToTop()">Home</span>
+        <span id="nav-docs" onclick="showToast('Docs link clicked')">Docs</span>
+        <span id="nav-login-link" onclick="openModal('login-modal')">Sign in</span>
+      </div>
+      <label class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span id="theme-label">Light</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Login Form -->
+    <div class="section" id="login-form-section">
+      <span class="badge badge-blue">Forms &amp; Validation</span>
+      <h2>Login form</h2>
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="admin" autocomplete="off">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="password">
+      <label for="role-select">Role</label>
+      <select id="role-select" name="role">
+        <option value="">Select role…</option>
+        <option value="admin">Admin</option>
+        <option value="editor">Editor</option>
+        <option value="viewer">Viewer</option>
+      </select>
+      <div class="checkbox-group" style="margin-top:10px;">
+        <label class="checkbox-item" style="margin-top:0;"><input type="checkbox" id="remember-me" name="remember_me"> Remember me</label>
+        <label class="checkbox-item" style="margin-top:0;"><input type="checkbox" id="newsletter" name="newsletter"> Subscribe to newsletter</label>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">Sign in</button>
+        <button class="btn" id="clear-btn" onclick="clearForm()">Clear</button>
+      </div>
+      <div class="form-error" id="form-error">Username and password are required.</div>
+      <div class="result-box" id="login-result">Login output appears here</div>
+    </div>
+
+    <!-- Counter -->
+    <div class="section">
+      <span class="badge badge-teal">Dynamic State</span>
+      <h2>Counter</h2>
+      <div class="counter-display" id="counter-value">0</div>
+      <div class="row" style="justify-content:center;">
+        <button class="btn btn-danger"  id="decrement-btn" onclick="updateCounter(-1)">− Decrement</button>
+        <button class="btn"             id="reset-btn"     onclick="resetCounter()">Reset</button>
+        <button class="btn btn-success" id="increment-btn" onclick="updateCounter(1)">+ Increment</button>
+      </div>
+      <div class="result-box" id="counter-status" style="margin-top:12px;">Counter is at zero</div>
+    </div>
+
+  </div>
+
+  <!-- Data Table -->
+  <div class="section">
+    <span class="badge badge-purple">Tables &amp; Sorting</span>
+    <h2>User data table</h2>
+    <div class="row" style="margin-bottom:12px;margin-top:0;">
+      <input type="text" id="table-search" placeholder="Search users…" oninput="filterTable()" style="max-width:200px;">
+      <select id="status-filter" onchange="filterTable()" style="max-width:140px;">
+        <option value="">All statuses</option>
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+        <option value="Pending">Pending</option>
+      </select>
+      <button class="btn btn-primary" id="add-row-btn" onclick="addRow()">+ Add row</button>
+      <button class="btn" id="export-btn" onclick="exportCSV()">Export CSV</button>
+    </div>
+    <table id="data-table">
+      <thead><tr>
+        <th class="sortable-header" onclick="sortTable('name')"   id="th-name">Name <span class="sort-icon">↕</span></th>
+        <th class="sortable-header" onclick="sortTable('email')"  id="th-email">Email <span class="sort-icon">↕</span></th>
+        <th class="sortable-header" onclick="sortTable('role')"   id="th-role">Role <span class="sort-icon">↕</span></th>
+        <th class="sortable-header" onclick="sortTable('status')" id="th-status">Status <span class="sort-icon">↕</span></th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:10px;" id="table-count"></div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Async -->
+    <div class="section">
+      <span class="badge badge-amber">Async &amp; Waits</span>
+      <h2>Async content loader</h2>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Simulates network delays — useful for testing explicit waits.</p>
+      <div class="row">
+        <button class="btn" id="load-fast-btn"   onclick="loadContent(500)">Load (0.5s)</button>
+        <button class="btn" id="load-medium-btn" onclick="loadContent(2000)">Load (2s)</button>
+        <button class="btn" id="load-slow-btn"   onclick="loadContent(4000)">Load (4s)</button>
+      </div>
+      <div class="result-box" id="async-result" style="margin-top:12px;">Click a button to trigger async load</div>
+      <div class="progress-bar"><div class="progress-fill" id="async-progress" style="width:0%"></div></div>
+    </div>
+
+    <!-- Alerts & Dialogs -->
+    <div class="section">
+      <span class="badge badge-coral">Alerts &amp; Modals</span>
+      <h2>Dialogs &amp; popups</h2>
+      <div class="row">
+        <button class="btn" id="alert-btn"   onclick="triggerAlert()">window.alert()</button>
+        <button class="btn" id="confirm-btn" onclick="triggerConfirm()">window.confirm()</button>
+        <button class="btn" id="prompt-btn"  onclick="triggerPrompt()">window.prompt()</button>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-primary" id="open-modal-btn" onclick="openModal('demo-modal')" style="width:100%;">Open custom modal</button>
+      </div>
+      <div class="result-box" id="dialog-result" style="margin-top:10px;">Dialog output appears here</div>
+    </div>
+
+  </div>
+
+  <!-- Tabs -->
+  <div class="section">
+    <span class="badge badge-green">Tabs &amp; Accordions</span>
+    <h2>Tabbed interface</h2>
+    <div class="tabs" id="tab-group">
+      <div class="tab active" id="tab-overview"  onclick="switchTab('overview')"  data-tab="overview">Overview</div>
+      <div class="tab"        id="tab-settings"  onclick="switchTab('settings')"  data-tab="settings">Settings</div>
+      <div class="tab"        id="tab-logs"      onclick="switchTab('logs')"      data-tab="logs">Logs</div>
+      <div class="tab"        id="tab-api"       onclick="switchTab('api')"       data-tab="api">API</div>
+    </div>
+    <div class="tab-content active" id="content-overview">
+      <p style="font-size:13px;color:var(--text-secondary);">This is the <strong>Overview</strong> tab. Selenium can verify tab switching by checking active states and visible content.</p>
+      <div style="margin-top:12px;" id="accordion">
+        <div class="accordion-item"><div class="accordion-header" id="acc-1" onclick="toggleAccordion(1)">What is Selenium? <span>+</span></div><div class="accordion-body" id="acc-body-1">Selenium is a suite of tools for automating web browsers. It provides a single interface for writing test scripts in multiple programming languages.</div></div>
+        <div class="accordion-item"><div class="accordion-header" id="acc-2" onclick="toggleAccordion(2)">Supported browsers <span>+</span></div><div class="accordion-body" id="acc-body-2">Chrome, Firefox, Safari, Edge, and Internet Explorer are all supported via WebDriver implementations.</div></div>
+        <div class="accordion-item"><div class="accordion-header" id="acc-3" onclick="toggleAccordion(3)">Wait strategies <span>+</span></div><div class="accordion-body" id="acc-body-3">Implicit waits, explicit waits, and fluent waits can all be tested using the async loader section above.</div></div>
+      </div>
+    </div>
+    <div class="tab-content" id="content-settings">
+      <label>Theme</label>
+      <select id="theme-select"><option>System default</option><option>Light</option><option>Dark</option></select>
+      <label>Language</label>
+      <select id="lang-select"><option>English</option><option>Spanish</option><option>French</option><option>German</option></select>
+      <div class="row" style="margin-top:12px;"><button class="btn btn-primary" id="save-settings-btn" onclick="showToast('Settings saved')">Save settings</button></div>
+    </div>
+    <div class="tab-content" id="content-logs">
+      <div id="log-area" style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);max-height:160px;overflow-y:auto;line-height:1.6;"></div>
+      <div class="row" style="margin-top:10px;"><button class="btn" id="clear-logs-btn" onclick="clearLogs()">Clear logs</button></div>
+    </div>
+    <div class="tab-content" id="content-api">
+      <label>Endpoint</label>
+      <input type="text" id="api-endpoint" value="https://jsonplaceholder.typicode.com/users/1" style="font-family:var(--font-mono);font-size:12px;">
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-primary" id="api-get-btn" onclick="callApi()">GET request</button>
+      </div>
+      <div class="result-box" id="api-result" style="margin-top:10px;max-height:120px;overflow:auto;white-space:pre;">API response appears here</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Drag & Drop -->
+    <div class="section">
+      <span class="badge badge-purple">Drag &amp; Drop</span>
+      <h2>Draggable items</h2>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">Drag from source to target zone.</p>
+      <label style="margin-top:0;">Source</label>
+      <div class="drag-zone" id="drag-source"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="handleDrop(event,'drag-source')">
+        <div class="drag-item" id="drag-a" draggable="true" ondragstart="startDrag(event,'drag-a')">Item A</div>
+        <div class="drag-item" id="drag-b" draggable="true" ondragstart="startDrag(event,'drag-b')">Item B</div>
+        <div class="drag-item" id="drag-c" draggable="true" ondragstart="startDrag(event,'drag-c')">Item C</div>
+      </div>
+      <label>Target</label>
+      <div class="drag-zone" id="drag-target"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="handleDrop(event,'drag-target')">
+        <span style="font-size:12px;color:var(--text-secondary);padding:4px;" id="drop-hint">Drop items here</span>
+      </div>
+      <div class="result-box" id="drag-result" style="margin-top:10px;">No items dropped yet</div>
+    </div>
+
+    <!-- Chips & File -->
+    <div class="section">
+      <span class="badge badge-teal">Chip Selection</span>
+      <h2>Multi-select chips</h2>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Click chips to toggle selection.</p>
+      <div class="chip-group" id="chip-group">
+        <div class="chip" id="chip-python"  onclick="toggleChip('chip-python','Python')">Python</div>
+        <div class="chip" id="chip-java"    onclick="toggleChip('chip-java','Java')">Java</div>
+        <div class="chip" id="chip-js"      onclick="toggleChip('chip-js','JavaScript')">JavaScript</div>
+        <div class="chip" id="chip-csharp"  onclick="toggleChip('chip-csharp','C#')">C#</div>
+        <div class="chip" id="chip-ruby"    onclick="toggleChip('chip-ruby','Ruby')">Ruby</div>
+        <div class="chip" id="chip-go"      onclick="toggleChip('chip-go','Go')">Go</div>
+      </div>
+      <div class="result-box" id="chip-result" style="margin-top:12px;">No language selected</div>
+      <label style="margin-top:12px;">File upload</label>
+      <input type="file" id="file-upload" accept=".txt,.csv,.json" onchange="handleFile(event)">
+      <div class="result-box" id="file-result" style="margin-top:8px;">No file selected</div>
+    </div>
+
+  </div>
+
+  <!-- Sliders -->
+  <div class="section">
+    <span class="badge badge-amber">Sliders &amp; Inputs</span>
+    <h2>Slider controls</h2>
+    <div class="two-col">
+      <div>
+        <label>Speed: <strong id="speed-val">50</strong></label>
+        <input type="range" id="speed-slider" min="0" max="100" value="50" step="1"
+               oninput="document.getElementById('speed-val').textContent=this.value;logEvent('Speed set to '+this.value);">
+        <label style="margin-top:14px;">Volume: <strong id="volume-val">30</strong></label>
+        <input type="range" id="volume-slider" min="0" max="100" value="30" step="1"
+               oninput="document.getElementById('volume-val').textContent=this.value;logEvent('Volume set to '+this.value);">
+      </div>
+      <div>
+        <label>Editable text</label>
+        <input type="text" id="inline-text" value="Click to edit this text">
+        <label style="margin-top:14px;">Textarea</label>
+        <textarea id="main-textarea" rows="3" placeholder="Type anything here…" style="resize:vertical;"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- Modal: Demo -->
+<div class="modal-overlay" id="demo-modal" onclick="if(event.target===this)closeModal('demo-modal')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 id="modal-title">Custom modal dialog</h3>
+    <p id="modal-body">This modal can be targeted by Selenium using its ID. Test backdrop click, close button, and focus trapping.</p>
+    <input type="text" id="modal-input" placeholder="Type inside the modal…" style="margin-bottom:12px;">
+    <div class="row">
+      <button class="btn btn-primary" id="modal-confirm-btn" onclick="confirmModal()">Confirm</button>
+      <button class="btn"             id="modal-close-btn"   onclick="closeModal('demo-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Login -->
+<div class="modal-overlay" id="login-modal" onclick="if(event.target===this)closeModal('login-modal')">
+  <div class="modal">
+    <h3>Sign in (nav)</h3>
+    <p>This modal was opened from the top nav — a different trigger path than the main login form.</p>
+    <label>Email</label>
+    <input type="email" id="modal-email" placeholder="you@example.com" style="margin-bottom:12px;">
+    <div class="row">
+      <button class="btn btn-primary" id="modal-login-btn" onclick="showToast('Nav login submitted');closeModal('login-modal')">Sign in</button>
+      <button class="btn" onclick="closeModal('login-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+  /* ── State ─────────────────────────────── */
+  let tableData = [
+    {id:1,name:'Alice Chen',    email:'alice@acme.com', role:'Admin',  status:'Active'},
+    {id:2,name:'Bob Martinez',  email:'bob@acme.com',   role:'Editor', status:'Inactive'},
+    {id:3,name:'Carol Smith',   email:'carol@acme.com', role:'Viewer', status:'Active'},
+    {id:4,name:'David Kim',     email:'david@acme.com', role:'Editor', status:'Pending'},
+    {id:5,name:'Eva Johansson', email:'eva@acme.com',   role:'Viewer', status:'Active'},
+  ];
+  let sortCol='name', sortDir=1, nextId=6;
+  let logs=[], draggedId=null, counterVal=0;
+  let selectedChips=new Set();
+  let asyncTimer=null, asyncStart=null, asyncDuration=0;
+  let toastTimer=null;
+  let isDark = false;
+
+  /* ── Dark mode ─────────────────────────── */
+  function toggleTheme(){
+    isDark = !isDark;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
+    logEvent('Theme switched to '+(isDark?'dark':'light'));
+  }
+
+  /* ── Logging ───────────────────────────── */
+  function logEvent(msg){
+    const ts = new Date().toLocaleTimeString();
+    logs.unshift('['+ts+'] '+msg);
+    const el = document.getElementById('log-area');
+    if(el) el.innerHTML = logs.slice(0,60).map(l=>'<div>'+l+'</div>').join('');
+  }
+
+  /* ── Table ─────────────────────────────── */
+  function renderTable(){
+    const search = document.getElementById('table-search').value.toLowerCase();
+    const statusF = document.getElementById('status-filter').value;
+    let rows = tableData.filter(r =>
+      (!search||(r.name.toLowerCase().includes(search)||r.email.toLowerCase().includes(search)||r.role.toLowerCase().includes(search)))
+      &&(!statusF||r.status===statusF)
+    );
+    rows.sort((a,b)=>a[sortCol]>b[sortCol]?sortDir:-sortDir);
+    const dotClass={Active:'dot-green',Inactive:'dot-red',Pending:'dot-amber'};
+    document.getElementById('table-body').innerHTML = rows.map(r=>`
+      <tr id="row-${r.id}" data-status="${r.status}">
+        <td><input class="inline-edit" value="${r.name}"  id="cell-name-${r.id}"  onchange="editCell(${r.id},'name',this.value)"  style="width:100%;"></td>
+        <td><input class="inline-edit" value="${r.email}" id="cell-email-${r.id}" onchange="editCell(${r.id},'email',this.value)" style="width:100%;"></td>
+        <td id="cell-role-${r.id}">${r.role}</td>
+        <td><span class="status-dot ${dotClass[r.status]}"></span><span id="cell-status-${r.id}">${r.status}</span></td>
+        <td><button class="btn" style="padding:3px 8px;font-size:11px;" onclick="deleteRow(${r.id})" id="delete-row-${r.id}">Delete</button></td>
+      </tr>`).join('');
+    document.getElementById('table-count').textContent = rows.length+' of '+tableData.length+' users';
+  }
+  function editCell(id,field,val){
+    const row=tableData.find(r=>r.id===id);
+    if(row){row[field]=val;logEvent('Edited row '+id+': '+field+' = '+val);}
+  }
+  function deleteRow(id){tableData=tableData.filter(r=>r.id!==id);logEvent('Deleted row '+id);renderTable();}
+  function addRow(){tableData.push({id:nextId++,name:'New User',email:'new@acme.com',role:'Viewer',status:'Pending'});logEvent('Added new row');renderTable();}
+  function filterTable(){renderTable();}
+  function sortTable(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}logEvent('Sorted by '+col+' '+(sortDir===1?'asc':'desc'));renderTable();}
+  function exportCSV(){
+    const rows=[['Name','Email','Role','Status'],...tableData.map(r=>[r.name,r.email,r.role,r.status])];
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const a=document.createElement('a');
+    a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download='users.csv'; a.click();
+    logEvent('Exported CSV');
+  }
+
+  /* ── Login ─────────────────────────────── */
+  function handleLogin(){
+    const u=document.getElementById('username').value;
+    const p=document.getElementById('password').value;
+    const role=document.getElementById('role-select').value;
+    const err=document.getElementById('form-error');
+    const res=document.getElementById('login-result');
+    if(!u||!p){err.style.display='block';err.textContent='Username and password are required.';return;}
+    err.style.display='none';
+    if(u==='admin'&&p==='password'){
+      res.className='result-box success';
+      res.textContent='Login successful — welcome, '+u+(role?' ('+role+')':'');
+      logEvent('Login success: '+u);
+    }else{
+      res.className='result-box error';
+      res.textContent='Login failed — invalid credentials';
+      logEvent('Login failed: '+u);
+    }
+  }
+  function clearForm(){
+    ['username','password'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('role-select').value='';
+    document.getElementById('remember-me').checked=false;
+    document.getElementById('newsletter').checked=false;
+    document.getElementById('login-result').className='result-box';
+    document.getElementById('login-result').textContent='Login output appears here';
+    document.getElementById('form-error').style.display='none';
+    logEvent('Form cleared');
+  }
+
+  /* ── Counter ───────────────────────────── */
+  function updateCounter(delta){
+    counterVal+=delta;
+    document.getElementById('counter-value').textContent=counterVal;
+    const s=document.getElementById('counter-status');
+    s.textContent=counterVal===0?'Counter is at zero':counterVal>0?'Counter is positive ('+counterVal+')':'Counter is negative ('+counterVal+')';
+    s.className='result-box'+(counterVal>0?' success':counterVal<0?' error':'');
+    logEvent('Counter updated to '+counterVal);
+  }
+  function resetCounter(){counterVal=0;updateCounter(0);logEvent('Counter reset');}
+
+  /* ── Async ─────────────────────────────── */
+  function loadContent(ms){
+    const res=document.getElementById('async-result');
+    const prog=document.getElementById('async-progress');
+    if(asyncTimer)clearInterval(asyncTimer);
+    res.className='result-box';
+    res.innerHTML='<span class="loader"></span> Loading… ('+ms+'ms)';
+    prog.style.width='0%';
+    asyncDuration=ms; asyncStart=Date.now();
+    asyncTimer=setInterval(()=>{
+      const pct=Math.min(100,((Date.now()-asyncStart)/asyncDuration)*100);
+      prog.style.width=Math.round(pct)+'%';
+      if(pct>=100){
+        clearInterval(asyncTimer);
+        res.className='result-box success';
+        res.textContent='Content loaded after '+ms+'ms — element id: async-result';
+        logEvent('Async load complete: '+ms+'ms');
+      }
+    },50);
+  }
+
+  /* ── Dialogs ───────────────────────────── */
+  function triggerAlert(){logEvent('window.alert triggered');document.getElementById('dialog-result').textContent='alert() called — Selenium: driver.switch_to.alert';alert('This is a Selenium test alert!');}
+  function triggerConfirm(){logEvent('window.confirm triggered');const ok=confirm('Do you confirm this action?');const r=document.getElementById('dialog-result');r.textContent='confirm() result: '+(ok?'OK (true)':'Cancel (false)');r.className='result-box'+(ok?' success':' error');}
+  function triggerPrompt(){logEvent('window.prompt triggered');const val=prompt('Enter a value for testing:','selenium');const r=document.getElementById('dialog-result');r.textContent=val!==null?'prompt() result: '+val:'prompt() was cancelled';r.className='result-box '+(val!==null?'success':'error');}
+
+  /* ── Modals ────────────────────────────── */
+  function openModal(id){document.getElementById(id).classList.add('open');logEvent('Modal opened: '+id);}
+  function closeModal(id){document.getElementById(id).classList.remove('open');logEvent('Modal closed: '+id);}
+  function confirmModal(){const val=document.getElementById('modal-input').value;showToast('Modal confirmed: '+(val||'(empty)'));logEvent('Modal confirmed, input='+val);closeModal('demo-modal');}
+
+  /* ── Tabs ──────────────────────────────── */
+  function switchTab(name){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    document.getElementById('content-'+name).classList.add('active');
+    logEvent('Tab switched to '+name);
+  }
+
+  /* ── Accordion ─────────────────────────── */
+  function toggleAccordion(n){
+    const body=document.getElementById('acc-body-'+n);
+    const isOpen=body.classList.contains('open');
+    document.querySelectorAll('.accordion-body').forEach(b=>b.classList.remove('open'));
+    if(!isOpen)body.classList.add('open');
+    logEvent('Accordion '+(isOpen?'closed':'opened')+': #'+n);
+  }
+
+  /* ── Drag & Drop ───────────────────────── */
+  function startDrag(e,id){draggedId=id;logEvent('Drag started: '+id);}
+  function handleDrop(e,zoneId){
+    e.preventDefault();
+    document.getElementById(zoneId).classList.remove('over');
+    const zone=document.getElementById(zoneId);
+    const hint=document.getElementById('drop-hint');
+    if(hint)hint.remove();
+    const el=document.getElementById(draggedId);
+    if(el)zone.appendChild(el);
+    const items=[...document.getElementById('drag-target').querySelectorAll('.drag-item')].map(e=>e.textContent);
+    const r=document.getElementById('drag-result');
+    r.textContent=items.length?'Target contains: '+items.join(', '):'Target is empty';
+    logEvent('Dropped '+draggedId+' into '+zoneId);
+  }
+
+  /* ── Chips ─────────────────────────────── */
+  function toggleChip(id,name){
+    const el=document.getElementById(id);
+    if(selectedChips.has(name)){selectedChips.delete(name);el.classList.remove('selected');}
+    else{selectedChips.add(name);el.classList.add('selected');}
+    document.getElementById('chip-result').textContent=selectedChips.size?'Selected: '+[...selectedChips].join(', '):'No language selected';
+    logEvent('Chip toggled: '+name);
+  }
+
+  /* ── File ──────────────────────────────── */
+  function handleFile(e){
+    const f=e.target.files[0];
+    const r=document.getElementById('file-result');
+    if(f){r.textContent='File: '+f.name+' ('+Math.round(f.size/1024*10)/10+' KB, '+(f.type||'unknown')+')';logEvent('File selected: '+f.name);}
+    else r.textContent='No file selected';
+  }
+
+  /* ── API ───────────────────────────────── */
+  async function callApi(){
+    const url=document.getElementById('api-endpoint').value;
+    const r=document.getElementById('api-result');
+    r.className='result-box'; r.textContent='Fetching…';
+    logEvent('API GET: '+url);
+    try{
+      const res=await fetch(url);
+      const json=await res.json();
+      r.className='result-box success';
+      r.textContent=JSON.stringify(json,null,2);
+      logEvent('API response: HTTP '+res.status);
+    }catch(e){
+      r.className='result-box error'; r.textContent='Error: '+e.message;
+      logEvent('API error: '+e.message);
+    }
+  }
+
+  /* ── Logs ──────────────────────────────── */
+  function clearLogs(){logs=[];document.getElementById('log-area').innerHTML='';logEvent('Logs cleared');}
+
+  /* ── Toast ─────────────────────────────── */
+  function showToast(msg){
+    const t=document.getElementById('toast-el');
+    t.textContent=msg; t.classList.add('show');
+    if(toastTimer)clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+    logEvent('Toast: '+msg);
+  }
+
+  function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'});logEvent('Scrolled to top');}
+
+  /* ── Init ──────────────────────────────── */
+  renderTable();
+  logEvent('App initialized — open the Logs tab to see events');
+</script>
+</body>
+</html>

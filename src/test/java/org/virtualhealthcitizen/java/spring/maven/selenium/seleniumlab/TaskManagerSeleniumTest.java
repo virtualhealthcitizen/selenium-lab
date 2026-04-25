@@ -49,7 +49,7 @@ class TaskManagerSeleniumTest {
 
     @AfterEach
     void tearDown() throws InterruptedException {
-        Thread.sleep(1000); // Leaves page open briefly after action is performed
+        Thread.sleep(1000); // Leaves page open briefly after actions are performed
         if (driver != null) {
             driver.quit();
         }
