@@ -2,10 +2,16 @@
 
 QA & automation lab with a focus on Selenium.
 
-### Run tests
+## Run tests
 
-#### Example
+### Task manager application (HTML, CSS, JavaScript)
 
 ```bash
 ./mvnw -Dtest=TaskManagerSeleniumTest -Dheadless=false test
+```
+
+### Portfolio application (React, TypeScript)
+
+```bash
+./mvnw -Dtest=PortfolioWebsiteTest -DappUrl=http://localhost:3000 -Dheadless=false test
 ```
